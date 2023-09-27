@@ -1,0 +1,73 @@
+---
+title: "Exercise4"
+author: "Alexandra Anderson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE,
+	include = FALSE
+)
+library(ggplot2)
+library(arm)
+library(ggfortify)
+library(AICcmodavg)
+library(grid)
+library(tidyverse)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r Frogs, message=FALSE, warning=FALSE, include=FALSE}
+library(readr)
+frogs <- read_csv("Anderson_PLOS_data.csv")
+frogs_filtered<-na.omit(frogs)
+glimpse(frogs_filtered)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r filtering, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(frogs_filtered, aes(PavedRoadDistance, CRLF)) +
+  geom_point(size=3) +
+  geom_smooth(method="glm", method.args=list(family="binomial"(link="logit"))) +
+  labs(title="Presence/Absence of California Red-legged Frog)") +
+  ylab ("Probability of Occurrence") +
+  xlab ("Distance to Paved Road (m)")
+```
+```{r Model, echo=FALSE, message=FALSE, warning=FALSE}
+model_frog <- glm(CRLF ~ PavedRoadDistance, data=frogs_filtered, family=binomial)
+model_frog
+```
+```{r check for overdispersion, echo=FALSE, message=FALSE, warning=FALSE}
+library(arm)
+x <- predict(model_frog)
+y <- resid(model_frog)
+binnedplot(x, y)
+```
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r Frog model coefficients}
+coef(model_frog)
+```
+
+```{r Frog model confidence intervals}
+confint(model_frog)
+```
+Interpret the slope of the logistic regression. Dividing the slope coefficient by four will give us an approximate estimate for the maximum predicted effect on the response of a unit change in the predictor. Slope of distance variable is 0.002.
+\
+\
+In this case, a difference in 1 unit of distance from a paved road (m) corresponds to a increase in the probability of spider presence of 0.5% since 0.002/4 = 0.005. . Notice the scale of paved road distance; it is 0.005 to 0.001. m
+
+```{r model summary}
+summary(model_frog)
+```
