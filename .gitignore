@@ -8,9 +8,9 @@
 
 # User-specific files
 .Ruserdata
-README.md
-Anderson_PLOS_data.csv
-exercise4.rmd
+"README.md"
+"Anderson_PLOS_data.csv""
+"exercise4.Rmd""
 
 # Example code in package build process
 *-Ex.R
