@@ -6,11 +6,19 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-	message = FALSE,
-	warning = FALSE,
-	include = FALSE
-)
+options(scipen = 1, digits = 2) #changes outputs to to decimal places.
+knitr::opts_chunk$set(echo = TRUE)
+packages_needed <- c("ggplot2", # graphics
+                     "arm", # display() etc.
+                     "ggfortify", # check model assumptions
+                     "AICcmodavg", #average AIC models
+                     "grid" #arrange objects
+                     )
+pk_to_install <- packages_needed [!( packages_needed %in% rownames(installed.packages())  )]
+if(length(pk_to_install)>0 ){
+  install.packages(pk_to_install,repos="http://cran.r-project.org")
+}
+#lapply(packages_needed, require, character.only = TRUE)
 library(ggplot2)
 library(arm)
 library(ggfortify)
@@ -19,11 +27,24 @@ library(grid)
 library(tidyverse)
 ```
 
-## R Markdown
+## Don't You Froget About Me
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Why are frogs so bad at data analysis?
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Because they jump to conclusions.
+
+![](images/ha-haha-01.gif)
+
+```{r Video, echo=FALSE, message=FALSE, warning=FALSE}
+library(vembedr)
+embed_youtube("9571clQoONE")
+```
+
+This analysis was conducted using previously collected data on the California red-legged frog, which is California's largest native frog. It is listed as federally threatened, in a large part due to habitat loss and introduction of the invasive American Bullfrog (who's presence/absence was also recorded in this data set).
+
+[Link to the data source](https://datadryad.org/stash/dataset/doi:10.5061/dryad.hc8qs61)
+
+![](images/CaliforniaRed-leggedFrog_FP_HIGHRES-01.jpg)
 
 ```{r Frogs, message=FALSE, warning=FALSE, include=FALSE}
 library(readr)
@@ -32,9 +53,21 @@ frogs_filtered<-na.omit(frogs)
 glimpse(frogs_filtered)
 ```
 
-## Including Plots
+## Choosing My Data
 
-You can also embed plots, for example:
+![](images/OIP (1).jpg)
+
+![*A photo of a road in the San Bernadino NF, one of the places you can find these frogs*](images/707179c534c63ca7ac592748bd3e6e4a-01.jpg)
+
+I chose to use the distance from a paved road as the variable I weighed against California red-legged frog presence/absence. They also looked at a wide variety of other variables like distance from dirt roads and hiking trails as well as some vegetation, food and water variables.
+
+```{r data frame, echo=FALSE, message=FALSE, warning=FALSE}
+glimpse(frogs_filtered)
+```
+
+## Binomial Plotting
+
+Here is the plot for my chosen variables.
 
 ```{r filtering, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(frogs_filtered, aes(PavedRoadDistance, CRLF)) +
@@ -44,30 +77,43 @@ ggplot(frogs_filtered, aes(PavedRoadDistance, CRLF)) +
   ylab ("Probability of Occurrence") +
   xlab ("Distance to Paved Road (m)")
 ```
+
+My initial model looking at my chosen variables.
+
 ```{r Model, echo=FALSE, message=FALSE, warning=FALSE}
 model_frog <- glm(CRLF ~ PavedRoadDistance, data=frogs_filtered, family=binomial)
 model_frog
 ```
+
+Here is my overdispersion check, like in our spider example. It looks a bit different, but I think most are still within the lines.
+
 ```{r check for overdispersion, echo=FALSE, message=FALSE, warning=FALSE}
 library(arm)
 x <- predict(model_frog)
 y <- resid(model_frog)
 binnedplot(x, y)
 ```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
-```{r Frog model coefficients}
+## Looking at the Model
+
+```{r Frog model coefficients, echo=FALSE, message=FALSE, warning=FALSE}
 coef(model_frog)
 ```
 
-```{r Frog model confidence intervals}
+```{r Frog model confidence intervals, echo=FALSE, message=FALSE, warning=FALSE}
 confint(model_frog)
 ```
-Interpret the slope of the logistic regression. Dividing the slope coefficient by four will give us an approximate estimate for the maximum predicted effect on the response of a unit change in the predictor. Slope of distance variable is 0.002.
-\
-\
-In this case, a difference in 1 unit of distance from a paved road (m) corresponds to a increase in the probability of spider presence of 0.5% since 0.002/4 = 0.005. . Notice the scale of paved road distance; it is 0.005 to 0.001. m
 
-```{r model summary}
+The slope of distance variable is 0.002. After using the divide by 4 rule, the distance of 1 meter from a paved road corresponds to a increase in the probability of CRLF presence of 0.5% since 0.002/4 = 0.005. The scale of paved road distance is 0.005 to 0.001. m
+
+```{r model summary, echo=FALSE, message=FALSE, warning=FALSE}
 summary(model_frog)
 ```
+
+In the model summary, the deviances are fairly similar, but there is no significant interaction between paved road distance and frog presence.
+
+Fun Fact:
+
+This is the frog that was referenced in Mark Twain's short story "The Celebrates Jumping Frog of Calavera's County"
+
+![](images/The-Celebrated-Jumping-Frog-of-Calaveras-County-And-Other-Sketches-Paperback-9781646793587_1dab3134-b3a1-4c3d-b3be-081c12b7a22d.c26245fc2debbbd376d84609898f0b60.jpeg)
